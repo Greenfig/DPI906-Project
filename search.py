@@ -44,6 +44,7 @@ if __name__ == '__main__':
            'Accept-Encoding': 'none',
            'Accept-Language': 'en-US,en;q=0.8',
            'Connection': 'keep-alive'}
+    counter = 0
     for result in results:
         title = result['title']
         link = result['link']
@@ -56,8 +57,8 @@ if __name__ == '__main__':
         print("SNIPPET : " + dis)
         print("LANDING PAGE : " + f.url)
         print("=================================================")
-        vtotal = virusTotal(f.url)
-        dwg = svgwrite.Drawing("test.svg", profile='tiny')
+        vtotal = virusTotal(f.url)        
+        dwg = svgwrite.Drawing("test"+str(counter)+".svg", profile='tiny')
         dwg.add(dwg.circle((0, 0), r=250, fill='blue'))
         dwg.add(dwg.text(link, insert=(0, 0),
                 text_anchor="middle", fill='red', font_size="10"))
@@ -85,4 +86,4 @@ if __name__ == '__main__':
           scan_text_start_y += 15
         dwg.save()
         f.close()
-        break
+        counter+=1
