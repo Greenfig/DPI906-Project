@@ -68,21 +68,21 @@ if __name__ == '__main__':
         dwg.add(dwg.line((250 + 400 + 250, 250), (250 + 400 + 250, 650),
                          stroke=svgwrite.rgb(10, 10, 16, '%')))
         rect_sx = 400
-        rect_sy = 300
+        rect_sy = 1030
         dwg.add(dwg.rect(((250 + 400 + 250) - (rect_sx / 2), 650),
                 (rect_sx, rect_sy), fill='grey'))
-        scan_text_start = 660
+        scan_text_start_x = 900
+        scan_text_start_y = 680
         for scan in vtotal.items():
           scan_name = scan[0]
           secondary_items = list(scan[1].items())
           scan_detected = secondary_items[0][1]
           scan_result = secondary_items[1][1]
           if scan_detected:
-            dwg.add(dwg.text(scan_name+" - True - "+scan_result, insert=(scan_text_start, 900), text_anchor="middle", fill='red'))
+            dwg.add(dwg.text(scan_name+" - True - "+scan_result, insert=(scan_text_start_x, scan_text_start_y), text_anchor="middle", fill='red'))
           else:
-            dwg.add(dwg.text(scan_name+" - False - "+scan_result, insert=(scan_text_start, 900), text_anchor="middle", fill='green'))
-          scan_text_start += 10
-          break
+            dwg.add(dwg.text(scan_name+" - False - "+scan_result, insert=(scan_text_start_x, scan_text_start_y), text_anchor="middle", fill='green'))
+          scan_text_start_y += 15
         dwg.save()
         f.close()
         break
