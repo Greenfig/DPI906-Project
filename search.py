@@ -1,5 +1,6 @@
 import pprint
-from urllib.request import urlopen, quote, urljoin, urlretrieve
+from urllib.request import urlopen, quote, urljoin, urlretrieve, Request
+from urllib.error import HTTPError
 import requests
 import http.client
 import svgwrite
@@ -10,6 +11,7 @@ from googleapiclient.discovery import build
 from bs4 import BeautifulSoup
 import re
 import hashlib
+import os
 
 
 def main():
@@ -17,9 +19,9 @@ def main():
     # the Google APIs Console <http://code.google.com/apis/console>
     # to get an API key for your own application.
     service = build("customsearch", "v1",
-                    developerKey="AIzaSyBj7XXzShIGQb1SBi2aDkNiyn_Z7VFPM1A")
+                    developerKey="AIzaSyAocvBVxj896xsymEkdk_vjXucwpJAcGgE")
     res = service.cse().list(
-        q='salary slip format in excel with formula free downloads',
+        q='salary slip format in excel with formula free download',
         cx='000891665926514897966:jvvhkj-zmoe',
     ).execute()
     return res['items']
@@ -49,13 +51,13 @@ def virusTotalFile(filename):
         for chunk in iter(lambda: f.read(65536), b""):
             hash_sha.update(chunk)
     hashcode = hash_sha.hexdigest()
+    os.remove(filename)
     headers = {
         "Accept-Encoding": "gzip, deflate",
         "User-Agent": "gzip,  My Python requests library example client or username"
     }
     params = {'apikey': '83af3fd41034cf9546ef08684d1f3d89c603d30d6af8176e842db2042e8807ff',
               'resource': hashcode}
-    files = {'file': (filename, open(filename, 'rb'))}
     response = requests.get('https://www.virustotal.com/vtapi/v2/file/report',
                             params=params, headers=headers)
     json_response = response.json()
@@ -69,9 +71,19 @@ def get_hops(url):
     redirect_re = re.compile('<meta[^>]*?url=(.*?)["\']', re.IGNORECASE)
     hops = []
     old = url
+    hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+       'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+       'Accept-Encoding': 'none',
+       'Accept-Language': 'en-US,en;q=0.8',
+       'Connection': 'keep-alive'}
     hops.insert(0, url)
+    reqst = Request(url, headers=hdr)
     while url:
-        decoded = urlopen(url).read().decode('utf-8')
+        try:
+            decoded = urlopen(reqst).read().decode('utf-8')
+        except (HTTPError, ValueError):
+            return None
         match = redirect_re.search(decoded)
         if match is not None:
             url = match.group(1)
@@ -83,12 +95,19 @@ def get_hops(url):
 
 
 def getDownloadList(url):
-    u = urlopen(url)
+    hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+    'Accept-Encoding': 'none',
+    'Accept-Language': 'en-US,en;q=0.8',
+    'Connection': 'keep-alive'}
+    reqst = Request(url, headers=hdr)
+    u = urlopen(reqst)
     try:
         html = u.read().decode('utf-8')
     finally:
         u.close()
-    soup = BeautifulSoup(html)
+    soup = BeautifulSoup(html, "html.parser")
     mylist = []    
     regex = re.compile('(\/[a-zA-z0-9-_]+\.[a-zA-Z]+)$')
     for link in soup.find_all('a', href=True):
@@ -98,26 +117,31 @@ def getDownloadList(url):
             if ".html" not in filename:
                 if ".php" not in filename:
                     if ".aspx" not in filename:
-                        urlretrieve(l, filename)
-                        mylist.insert(0, filename)
+                        if ".htm" not in filename:
+                            try:
+                                urlretrieve(l, filename)                         
+                                mylist.insert(0, filename)
+                            except ValueError:
+                                print ("download failed")
     return mylist
 
 
 if __name__ == '__main__':
-    results = main()
-    http.client.HTTPConnection.debuglevel = 1
-    hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
-           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-           'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-           'Accept-Encoding': 'none',
-           'Accept-Language': 'en-US,en;q=0.8',
-           'Connection': 'keep-alive'}
+    results = { 'link':'link' }
+    #results = main()
+    #results['link'] = "http://eagleepicsocks.com/2d/"
+    #results['link'] = "http://umunna.info"
+    #results['link'] = "http://peceducacion.com"
+    #results['link'] = "http://critical-virus.xyz/new"
+    #results['link'] = "https://s3.amazonaws.com/aws-website-dpiproject-bwm6w/index.html"
+    results['link'] = "http://smartnewtab.com/"
     for result in results:
-        #response = get_hops("https://s3.amazonaws.com/aws-website-dpiproject-bwm6w/index.html")
         #response = get_hops(result['link'])
-        #response = get_hops("http://gynvael.coldwind.pl/")
+        response = get_hops(results['link'])
+        if not response:
+            continue
         svgfile_regex = re.compile('(\/\/[a-zA-z0-9-_]+\.[a-zA-Z]+)')
-        svgfile_name = svgfile_regex.search(result['link']).group(
+        svgfile_name = svgfile_regex.search(response[0]).group(
             1).replace("//", "").replace(".com", "")
         dwg = svgwrite.Drawing(
             svgfile_name + ".svg", profile='tiny')
@@ -173,13 +197,13 @@ if __name__ == '__main__':
             if len(vtotal.keys()) > 0:
                 first = None
                 for scan in vtotal.items():
-                    if not first:
-                        first = scan
                     scan_name = scan[0]
                     secondary_items = list(scan[1].items())
                     scan_detected = secondary_items[0][1]
                     scan_result = secondary_items[1][1]
                     if scan_detected:
+                        if not first:
+                            first = scan
                         if scan != first:
                             line_y_start = line_y_end + rect_sy
                             line_y_end = line_y_start + 80
