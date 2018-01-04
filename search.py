@@ -44,11 +44,11 @@ def virusTotalUrl(url):
 
 
 def virusTotalFile(filename):
-    hash_md5 = hashlib.md5()
+    hash_sha = hashlib.sha256()
     with open(filename, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    hashcode = hash_md5.hexdigest()
+        for chunk in iter(lambda: f.read(65536), b""):
+            hash_sha.update(chunk)
+    hashcode = hash_sha.hexdigest()
     headers = {
         "Accept-Encoding": "gzip, deflate",
         "User-Agent": "gzip,  My Python requests library example client or username"
@@ -83,23 +83,23 @@ def get_hops(url):
 
 
 def getDownloadList(url):
-    c = 0
     u = urlopen(url)
     try:
         html = u.read().decode('utf-8')
     finally:
         u.close()
     soup = BeautifulSoup(html)
-    mylist = []
+    mylist = []    
+    regex = re.compile('(\/[a-zA-z0-9-_]+\.[a-zA-Z]+)$')
     for link in soup.find_all('a', href=True):
         l = link.get('href')
-        regex = re.compile('(\/[a-zA-z0-9-_]+\.[a-zA-Z]+)$')
         if regex.search(l):
-            regex = re.compile('(\/[a-zA-z0-9-_]+\.[a-zA-Z]+)$')
             filename = regex.search(l).group(1).replace("/", "")
-            urlretrieve(l, filename)
-            mylist.insert(c, filename)
-            c += 1
+            if ".html" not in filename:
+                if ".php" not in filename:
+                    if ".aspx" not in filename:
+                        urlretrieve(l, filename)
+                        mylist.insert(0, filename)
     return mylist
 
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
            'Connection': 'keep-alive'}
     for result in results:
         #response = get_hops("https://s3.amazonaws.com/aws-website-dpiproject-bwm6w/index.html")
-        response = get_hops(result['link'])
+        #response = get_hops(result['link'])
         #response = get_hops("http://gynvael.coldwind.pl/")
         svgfile_regex = re.compile('(\/\/[a-zA-z0-9-_]+\.[a-zA-Z]+)')
         svgfile_name = svgfile_regex.search(result['link']).group(
@@ -224,16 +224,16 @@ if __name__ == '__main__':
                         scan_text_start_x, scan_text_start_y), text_anchor="middle", fill='green'))
                 scan_text_start_y += 15
                 vtotal = virusTotalFile(filename)
+                isMalicious = False
                 if vtotal:
                     if len(vtotal.keys()) > 0:
                         for scan in vtotal.items():
                             scan_name = scan[0]
                             secondary_items = list(scan[1].items())
                             scan_detected = secondary_items[0][1]
-                            scan_result = secondary_items[1][1]
                             if scan_detected:
                                 isMalicious = True
-                                dwg.add(dwg.text(scan_name + " - True - " + scan_result, insert=(
+                                dwg.add(dwg.text(scan_name + " - True ", insert=(
                                     scan_text_start_x, scan_text_start_y), text_anchor="middle", fill='red'))
                                 scan_text_start_y += 15
                                 rect_sy += 20
