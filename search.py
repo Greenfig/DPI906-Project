@@ -46,26 +46,36 @@ def virusTotalUrl(url):
 
 
 def virusTotalFile(filename):
-    hash_sha = hashlib.sha256()
+    hash_sha2 = hashlib.sha256()
+    hash_md5 = hashlib.md5()
+    hash_sha1 = hashlib.sha1()
+    hashcode = []
     with open(filename, "rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):
-            hash_sha.update(chunk)
-    hashcode = hash_sha.hexdigest()
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_sha2.update(chunk)
+            hash_md5.update(chunk)
+            hash_sha1.update(chunk)
+    hashcode.insert(0,hash_sha2.hexdigest())
+    hashcode.insert(0, hash_md5.hexdigest())
+    hashcode.insert(0, hash_sha1.hexdigest())
     os.remove(filename)
+
     headers = {
         "Accept-Encoding": "gzip, deflate",
         "User-Agent": "gzip,  My Python requests library example client or username"
     }
-    params = {'apikey': '83af3fd41034cf9546ef08684d1f3d89c603d30d6af8176e842db2042e8807ff',
-              'resource': hashcode}
-    response = requests.get('https://www.virustotal.com/vtapi/v2/file/report',
-                            params=params, headers=headers)
-    json_response = response.json()
-    dumps = json.dumps(json_response)
-    loads = json.loads(dumps)
-    time.sleep(16)
+    for h in hashcode:
+        params = {'apikey': '83af3fd41034cf9546ef08684d1f3d89c603d30d6af8176e842db2042e8807ff',
+                'resource': h}
+        response = requests.get('https://www.virustotal.com/vtapi/v2/file/report',
+                                params=params, headers=headers)
+        json_response = response.json()
+        dumps = json.dumps(json_response)
+        loads = json.loads(dumps)
+        time.sleep(16)
+        if loads.get('response_code') == 1:
+            return loads.get('scans')
     return loads.get('scans')
-
 
 def get_hops(url):
     redirect_re = re.compile('<meta[^>]*?url=(.*?)["\']', re.IGNORECASE)
@@ -114,20 +124,22 @@ def getDownloadList(url):
         l = link.get('href')
         filename = l.split('/')[-1]
         if filename:
-            if ".html" not in filename:
-                if ".php" not in filename:
-                    if ".aspx" not in filename:
-                        if ".htm" not in filename:
-                            try:
-                                if "http" not in l:
-                                    #remove forward slash from the url
-                                    if "/" in url[-1]:
-                                        url = url[:-1]
-                                    l = url + "/" + filename
-                                urlretrieve(l, filename)                         
-                                mylist.insert(0, filename)
-                            except ValueError:
-                                print ("download failed")
+            if "www." not in filename:
+                if ".html" not in filename:
+                    if ".php" not in filename:
+                        if ".aspx" not in filename:
+                            if ".htm" not in filename:
+                                if "#" not in filename:
+                                    try:
+                                        if "http" not in l:
+                                            #remove forward slash from the url
+                                            if "/" in url[-1]:
+                                                url = url[:-1]
+                                            l = url + "/" + filename
+                                        urlretrieve(l, filename)                         
+                                        mylist.insert(0, filename)
+                                    except ValueError:
+                                        print ("download failed")
     return mylist
 
 
@@ -140,6 +152,7 @@ if __name__ == '__main__':
     #results['link'] = "http://critical-virus.xyz/new"
     results['link'] = "https://s3.amazonaws.com/aws-website-dpiproject-bwm6w/index.html"
     #results['link'] = "http://smartnewtab.com/"
+    #results['link'] = "https://exceldatapro.com/download-salary-sheet-template/"
     for result in results:
         #response = get_hops(result['link'])
         response = get_hops(results['link'])
@@ -185,7 +198,7 @@ if __name__ == '__main__':
         # Query virus total on url
         vtotal = virusTotalUrl(landingpage)
         line_x_start = line_x_end = circle_lx
-        line_y_start = line_x_start + circle_radius
+        line_y_start = circle_radius
         line_y_end = line_y_start + 400
         dwg.add(dwg.line((line_x_start, line_y_start), (line_x_end,
                                                         line_y_end), stroke=svgwrite.rgb(10, 10, 16, '%')))
