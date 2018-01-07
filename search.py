@@ -78,9 +78,10 @@ def get_hops(url):
        'Accept-Language': 'en-US,en;q=0.8',
        'Connection': 'keep-alive'}
     hops.insert(0, url)
-    reqst = Request(url, headers=hdr)
+    
     while url:
         try:
+            reqst = Request(url, headers=hdr)
             decoded = urlopen(reqst).read().decode('utf-8')
         except (HTTPError, ValueError):
             return None
@@ -108,17 +109,21 @@ def getDownloadList(url):
     finally:
         u.close()
     soup = BeautifulSoup(html, "html.parser")
-    mylist = []    
-    regex = re.compile('(\/[a-zA-z0-9-_]+\.[a-zA-Z]+)$')
+    mylist = []
     for link in soup.find_all('a', href=True):
         l = link.get('href')
-        if regex.search(l):
-            filename = regex.search(l).group(1).replace("/", "")
+        filename = l.split('/')[-1]
+        if filename:
             if ".html" not in filename:
                 if ".php" not in filename:
                     if ".aspx" not in filename:
                         if ".htm" not in filename:
                             try:
+                                if "http" not in l:
+                                    #remove forward slash from the url
+                                    if "/" in url[-1]:
+                                        url = url[:-1]
+                                    l = url + "/" + filename
                                 urlretrieve(l, filename)                         
                                 mylist.insert(0, filename)
                             except ValueError:
@@ -133,8 +138,8 @@ if __name__ == '__main__':
     #results['link'] = "http://umunna.info"
     #results['link'] = "http://peceducacion.com"
     #results['link'] = "http://critical-virus.xyz/new"
-    #results['link'] = "https://s3.amazonaws.com/aws-website-dpiproject-bwm6w/index.html"
-    results['link'] = "http://smartnewtab.com/"
+    results['link'] = "https://s3.amazonaws.com/aws-website-dpiproject-bwm6w/index.html"
+    #results['link'] = "http://smartnewtab.com/"
     for result in results:
         #response = get_hops(result['link'])
         response = get_hops(results['link'])
